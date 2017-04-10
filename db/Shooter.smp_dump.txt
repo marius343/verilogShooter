@@ -1,0 +1,95 @@
+
+State Machine - |Shooter|TargetFSM:T6|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|TargetFSM:T5|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|TargetFSM:T4|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|TargetFSM:T3|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|TargetFSM:T2|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|TargetFSM:T1|current_state
+Name current_state.S_TAR current_state.S_FADE current_state.S_CLEAR current_state.S_WAIT current_state.S_HIT 
+current_state.S_WAIT 0 0 0 0 0 
+current_state.S_CLEAR 0 0 1 1 0 
+current_state.S_FADE 0 1 0 1 0 
+current_state.S_TAR 1 0 0 1 0 
+current_state.S_HIT 0 0 0 1 1 
+
+State Machine - |Shooter|BossFSM:Boss|current_state
+Name current_state.S_CLEAR current_state.S_FADEOUT current_state.S_HITCOUNT current_state.S_HIT current_state.S_TAR current_state.S_FADEIN current_state.S_WAIT 
+current_state.S_WAIT 0 0 0 0 0 0 0 
+current_state.S_FADEIN 0 0 0 0 0 1 1 
+current_state.S_TAR 0 0 0 0 1 0 1 
+current_state.S_HIT 0 0 0 1 0 0 1 
+current_state.S_HITCOUNT 0 0 1 0 0 0 1 
+current_state.S_FADEOUT 0 1 0 0 0 0 1 
+current_state.S_CLEAR 1 0 0 0 0 0 1 
+
+State Machine - |Shooter|TitleFSM:Title|current_state
+Name current_state.S_WAIT_T1 current_state.S_END current_state.S_WAIT3 current_state.S_WAIT2 current_state.S_WAIT1 current_state.S_TITLE2 current_state.S_TITLE1 
+current_state.S_TITLE1 0 0 0 0 0 0 0 
+current_state.S_TITLE2 0 0 0 0 0 1 1 
+current_state.S_WAIT1 0 0 0 0 1 0 1 
+current_state.S_WAIT2 0 0 0 1 0 0 1 
+current_state.S_WAIT3 0 0 1 0 0 0 1 
+current_state.S_END 0 1 0 0 0 0 1 
+current_state.S_WAIT_T1 1 0 0 0 0 0 1 
+
+State Machine - |Shooter|irDetector:comb_3|DE2_Audio_Example:u56|avconf:avc|mSetup_ST
+Name mSetup_ST.0000 mSetup_ST.0010 mSetup_ST.0001 
+mSetup_ST.0000 0 0 0 
+mSetup_ST.0001 1 0 1 
+mSetup_ST.0010 1 1 0 
+
+State Machine - |Shooter|irDetector:comb_3|DE2_Audio_Example:u56|gunshotSound:g1|current_state
+Name current_state.PLAY_SOUND2 current_state.PLAY_SOUND1 current_state.PLAY_SOUND current_state.WAIT_1 current_state.WAIT_2 
+current_state.WAIT_1 0 0 0 0 0 
+current_state.PLAY_SOUND 0 0 1 1 0 
+current_state.PLAY_SOUND1 0 1 0 1 0 
+current_state.PLAY_SOUND2 1 0 0 1 0 
+current_state.WAIT_2 0 0 0 1 1 
+
+State Machine - |Shooter|irDetector:comb_3|datapath:u1|triggerDetector:u454|current_state
+Name current_state.WAIT_1 current_state.WAIT_2 current_state.TRIGGER_PRESSED 
+current_state.WAIT_1 0 0 0 
+current_state.TRIGGER_PRESSED 1 0 1 
+current_state.WAIT_2 1 1 0 
+
+State Machine - |Shooter|Trigger:TRI|current_state
+Name current_state.S_WAIT current_state.S_PRESSED current_state.S_WAIT_P current_state.S_PULSE 
+current_state.S_WAIT_P 0 0 0 0 
+current_state.S_PRESSED 0 1 1 0 
+current_state.S_WAIT 1 0 1 0 
+current_state.S_PULSE 0 0 1 1 

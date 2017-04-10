@@ -1,0 +1,65 @@
+module TitleFSM(resetn, clk, start, title1, title2, titleoff);
+	input resetn, clk, start;
+	output reg  title1, title2, titleoff;
+	
+	//title flash
+	reg [25:0] flashclk;
+	always @(posedge clk) begin
+		if (!resetn) flashclk <= 26'd0;
+		else if (flashclk == 26'd5000000) flashclk <= 26'd0;
+		else flashclk <= flashclk + 1'b1;
+	end
+	
+	reg [2:0] current_state, next_state;
+	localparam  S_TITLE1   = 3'd0,
+					S_TITLE2   = 3'd1,
+					S_WAIT	  = 3'd2;
+					
+	//State Table
+	always@(*)
+	begin
+		case (current_state)
+			S_TITLE1:
+				begin
+					if(flashclk == 26'd0) next_state = S_TITLE2;
+					else if(start) next_state = S_WAIT;
+					else next_state = S_TITLE1;
+				end
+			S_TITLE2:
+				begin
+					if(flashclk == 26'd0) next_state = S_TITLE1;
+					else if(start) next_state = S_WAIT;
+					else next_state = S_TITLE2;
+				end
+			S_WAIT:
+				begin
+					if(!resetn) next_state = S_TITLE1;
+					else next_state = S_WAIT;
+				end
+			default: next_state = S_TITLE1;
+		endcase
+	end
+	
+	//Enable Signals
+	always @(*)
+	begin
+		title1 = 1'b0;
+		title2 = 1'b0;
+		titleoff = 1'b0;
+		case (current_state)
+			S_TITLE1: title1 = 1'b1;
+			S_TITLE2: title2 = 1'b1;
+			S_WAIT: titleoff = 1'b1;
+		endcase
+	end
+	
+	//State FFs
+	always@(posedge clk)
+	begin: state_FFs
+		if(!resetn)
+			current_state <= S_TITLE1;
+		else
+			current_state <= next_state;
+	end
+	
+endmodule

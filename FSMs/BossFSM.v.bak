@@ -1,0 +1,88 @@
+module BossFSM(resetn, clk, spawn, kill, fade, tar, hit, clear);
+	input resetn, clk, spawn, kill;
+	output reg fade, tar, hit, clear;
+	
+	//BOSS PERIOD
+	reg [25:0] flashclk;
+	always @(posedge clk) begin
+		if (fadeclk == 26'd9999999) flashclk <= 26'd0;
+		else if (flashclk == 26'd50000000) flashclk <= 26'd0;
+		else flashclk <= flashclk + 1'b1;
+	end
+	
+	//fade period
+	reg [25:0] fadeclk;
+	always @(posedge clk) begin
+		if (spawn || kill || flashclk == 26'd50000000) fadeclk <= 26'd0;
+		else if (fadeclk == 26'd10000000) fadeclk <= 26'd10000000;
+		else fadeclk <= fadeclk + 1'b1;
+	end
+	
+	//FSM
+	reg [2:0] current_state, next_state;
+	localparam  S_CLEAR    = 3'd0,
+					S_FADEIN	  = 3'd1,
+					S_TAR		  = 3'd2,
+					S_HIT      = 3'd3,
+					S_FADEOUT  = 3'd4;
+	
+	//State Table
+	always@(*)
+	begin
+		case (current_state)
+			S_CLEAR:
+				begin
+					if(spawn) next_state = S_FADEIN;
+					else next_state = S_CLEAR;
+				end
+			S_FADEIN:
+				begin 
+					if(fadeclk == 26'd10000000) next_state = S_TAR;
+					else next_state = S_FADEIN;
+				end
+			S_TAR:
+				begin
+					if(flashclk == 26'd50000000) next_state = S_FADEOUT;
+					else if(kill) next_state = S_HIT;
+					else next_state = S_TAR;
+				end
+			S_HIT:
+				begin
+					if(fadeclk == 26'd10000000) next_state = S_CLEAR;
+					else next_state = S_HIT;
+				end
+			S_FADEOUT:
+			begin 
+				if(fadeclk == 26'd10000000) next_state = S_CLEAR;
+				else next_state = S_FADEOUT;
+			end
+			default: next_state = S_CLEAR;
+		endcase
+	end
+	
+	//Enable Signals
+	always @(*)
+	begin
+		fade = 1'b0;
+		tar = 1'b0;
+		hit = 1'b0;
+		clear = 1'b0;
+		case (current_state)
+			S_CLEAR: clear = 1'b1;
+			S_FADEIN: fade = 1'b1;
+			S_TAR: tar = 1'b1;
+			S_HIT: hit = 1'b1;
+			S_FADEOUT: fade = 1'b1;
+		endcase
+	end
+
+	//State FFs
+	always@(posedge clk)
+	begin: state_FFs
+		if(!resetn)
+			current_state <= S_CLEAR;
+		else
+			current_state <= next_state;
+	end
+	
+endmodule

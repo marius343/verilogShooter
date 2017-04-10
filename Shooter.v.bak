@@ -1,0 +1,339 @@
+//MAIN MODULE
+module Shooter(CLOCK_50, KEY, SW, VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_R, VGA_G, VGA_B, GPIO_1, AUD_ADCDAT, AUD_BCLK, AUD_ADCLRCK, AUD_DACLRCK, AUD_XCK, AUD_DACDAT, I2C_SCLK, I2C_SDAT, LEDR, HEX0, HEX1);
+	//Board inputs
+	input	CLOCK_50;
+	input [35:0] GPIO_1;
+	
+	//Test in/outputs
+	input [3:0] KEY;
+	input [9:0] SW;
+	output [9:0] LEDR;
+	output [6:0] HEX0, HEX1;
+	
+	//VGA inputs
+	wire [2:0] colour;
+	wire [8:0] x;
+	wire [9:0] y;
+	
+	//Audio
+	input AUD_ADCDAT;
+	inout AUD_BCLK;
+	inout AUD_ADCLRCK;
+	inout AUD_DACLRCK;
+	output AUD_XCK;
+   output AUD_DACDAT;
+	inout	I2C_SDAT;
+	output I2C_SCLK;
+	
+	//VGA outputs
+	output VGA_CLK;
+	output VGA_HS;
+	output VGA_VS;
+	output VGA_BLANK_N;
+	output VGA_SYNC_N;
+	output [9:0] VGA_R;
+	output [9:0] VGA_G;
+	output [9:0] VGA_B;
+	
+	//Signals
+	wire resetn;
+	wire trigger;
+	wire [8:0] xCross;
+	wire [7:0] yCross;
+	wire [4:0] countdown;
+	wire EndCond1, EndCond2;
+	wire [6:0] spawn, kill;
+	
+	countdown CD(CLOCK_50, titleoff, countdown, EndCond2, HEX0, HEX1);
+	Trigger TRI(GPIO_1, CLOCK_50, resetn, trigger);
+	Sensor  SEN(GPIO_1, trigger, kill);
+	//Sensor  SEN(xCross, yCross, trigger, kill);
+	irDetector(
+		.SW(10'd0),
+		.GPIO_1(GPIO_1[35:0]),
+		.CLOCK_50(CLOCK_50), 
+		.KEY(4'b1111), 
+		.AUD_ADCDAT(AUD_ADCDAT), 
+		.AUD_BCLK(AUD_BCLK), 
+		.AUD_ADCLRCK(AUD_ADCLRCK), 
+		.AUD_DACLRCK(AUD_DACLRCK), 
+		.AUD_XCK(AUD_XCK), 
+		.AUD_DACDAT(AUD_DACDAT), 
+		.I2C_SCLK(I2C_SCLK), 
+		.I2C_SDAT(I2C_SDAT), 
+		.x_output(xCross), 
+		.y_output(yCross),
+		.plotOut(aimPlot), 
+		.colourOut(aimColour[2:0]), 
+		.Rcounter(outCounter[24:0])
+		
+		);
+	wire [2:0] aimColour;
+	wire aimPlot;
+	
+	
+	
+	//TEST 
+	assign resetn = ~SW[0];
+	assign LEDR[4:0] = countdown[4:0];
+	
+	BossCondition BC(resetn, CLOCK_50, &clear[6:1], spawn[0]);
+	LFSR S1(resetn, CLOCK_50, kill[1], spawn[1]);
+	LFSR S2(resetn, CLOCK_50, kill[2], spawn[2]);
+	LFSR S3(resetn, CLOCK_50, kill[3], spawn[3]);
+	LFSR S4(resetn, CLOCK_50, kill[4], spawn[4]);
+	LFSR S5(resetn, CLOCK_50, kill[5], spawn[5]);
+	LFSR S6(resetn, CLOCK_50, kill[6], spawn[6]);
+	
+	//Controls
+	wire titleoff, title1, title2, winend, loseend;
+	wire [6:0] fade, tar, hit, clear;
+	
+	TitleFSM Title(resetn, CLOCK_50, trigger, EndCond1, EndCond2, title1, title2, winend, loseend, titleoff);
+	BossFSM  Boss(resetn, CLOCK_50, spawn[0], kill[0], EndCond1, titleoff, fade[0], tar[0], hit[0], clear[0]);
+	TargetFSM  T1(resetn, CLOCK_50, spawn[1], kill[1], EndCond1|EndCond2, titleoff, fade[1], tar[1], hit[1], clear[1]);
+	TargetFSM  T2(resetn, CLOCK_50, spawn[2], kill[2], EndCond1|EndCond2, titleoff, fade[2], tar[2], hit[2], clear[2]);
+	TargetFSM  T3(resetn, CLOCK_50, spawn[3], kill[3], EndCond1|EndCond2, titleoff, fade[3], tar[3], hit[3], clear[3]);
+	TargetFSM  T4(resetn, CLOCK_50, spawn[4], kill[4], EndCond1|EndCond2, titleoff, fade[4], tar[4], hit[4], clear[4]);
+	TargetFSM  T5(resetn, CLOCK_50, spawn[5], kill[5], EndCond1|EndCond2, titleoff, fade[5], tar[5], hit[5], clear[5]);
+	TargetFSM  T6(resetn, CLOCK_50, spawn[6], kill[6], EndCond1|EndCond2, titleoff, fade[6], tar[6], hit[6], clear[6]);
+	
+	wire [24:0] outCounter;
+	
+	Datapath D(CLOCK_50, resetn, title1, title2, winend, loseend, titleoff, fade, tar, hit, clear, colour, x, y, outCounter);
+	
+	vga_adapter VGA(
+			.resetn(resetn),
+			.clock(CLOCK_50),
+			.colour(VGAcolour),
+			.x(VGAx),
+			.y(VGAy),
+			.plot(1'b1),
+			.VGA_R(VGA_R),
+			.VGA_G(VGA_G),
+			.VGA_B(VGA_B),
+			.VGA_HS(VGA_HS),
+			.VGA_VS(VGA_VS),
+			.VGA_BLANK(VGA_BLANK_N),
+			.VGA_SYNC(VGA_SYNC_N),
+			.VGA_CLK(VGA_CLK));
+		defparam VGA.RESOLUTION = "320x240";
+		defparam VGA.MONOCHROME = "FALSE";
+		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
+		defparam VGA.BACKGROUND_IMAGE = "Black.mif";
+		
+		//Following logic is for whether the crosshair should be drawn or the background, see irDetector->control->state_table for more info
+		wire [2:0] VGAcolour;
+		wire [8:0] VGAx;
+		wire [9:0] VGAy;
+
+		assign VGAx = (aimPlot & titleoff)? xCross : x;
+		assign VGAy = (aimPlot & titleoff) ? yCross : y;
+		assign VGAcolour = (aimPlot & titleoff)? aimColour : colour;
+
+		
+endmodule
+
+
+
+//BOSS SPAWN CONDITION
+module BossCondition(resetn, clk, allclear, spawn);
+	input resetn, clk, allclear;
+	output spawn;
+	
+	//Boss Spawn signal
+	reg [25:0] Scounter;
+	always @(posedge clk) begin
+		if (!resetn || !allclear) Scounter <= 26'd0;
+		else if (Scounter == 26'd50000000) Scounter <= 26'd2;
+		else Scounter <= Scounter + 1'b1;
+	end
+	assign spawn = (Scounter == 25'd1) ? 1'b1 : 1'b0;
+
+	
+endmodule
+
+//LEFT SHIFT REGISTER
+module LFSR(resetn, clk, kill, spawn);
+	input clk, resetn, kill;
+	output spawn;
+
+	reg [29:0] delay, counter;
+	reg [26:0] timer, timer_next;
+	wire feedback = timer[25]^timer[20]^timer[12]^timer[6]^timer[0];
+
+	always @(posedge clk) begin
+		if(!resetn) timer <= 27'hFF;
+		else timer <= {timer[25:0], feedback};
+	end
+
+	//Around 5~7 seconds delay
+	always @(*) begin
+		if(!resetn) delay = 30'd300000000;
+		else if(kill) begin
+			delay = 30'd300000000 + timer;
+		end
+		else delay = delay;
+	end
+
+	always @(posedge clk) begin
+		if (!resetn || kill) counter <= 30'd0;
+		else if (counter == delay) counter <= 30'd0;
+		else counter <= counter + 1'b1;
+	end
+
+	assign spawn = (counter == delay) ? 1'b1 : 1'b0;
+
+endmodule
+
+
+//TRIGGER FSM
+module Trigger(GPIO_1, clk, resetn, trigger);
+	input clk, resetn;
+	input [35:0] GPIO_1;
+	output reg trigger;
+	
+	//0.25 sec clock
+	reg [24:0] triggerclk;
+	always @(posedge clk) begin
+		if (pulse) triggerclk <= 25'd0;
+		else if (triggerclk == 25'd5000000) triggerclk <= 25'd5000000;
+		else triggerclk <= triggerclk + 1'b1;
+	end
+	
+	//FSM
+	reg [2:0]current_state, next_state;
+	localparam  S_WAIT_P	 = 3'd1,
+					S_PRESSED = 3'd2,
+					S_WAIT	 = 3'd3,
+					S_PULSE	 = 3'd4;
+	
+	wire button;
+	reg pulse;
+	assign button = GPIO_1[1];
+	
+	//State Table
+	always@(*)
+	begin
+		case (current_state)
+			S_WAIT_P:
+				begin
+					if(button) next_state = S_PRESSED;
+					else next_state = S_WAIT_P;
+				end
+			S_PRESSED:
+				begin
+					if(!button) next_state = S_WAIT;
+					else next_state = S_PRESSED;
+				end
+			S_WAIT: next_state = S_PULSE;
+			S_PULSE:
+				begin 
+					if(triggerclk != 25'd5000000) next_state = S_PULSE;
+					else next_state = S_WAIT_P;
+				end
+			default: next_state = S_WAIT_P;
+		endcase
+	end
+	
+	//Enable Signals
+	always @(*)
+	begin
+		pulse = 1'b0;
+		trigger = 1'b0;
+		case (current_state)
+			S_WAIT: pulse = 1'b1;
+			S_PULSE: trigger = 1'b1;
+		endcase
+	end
+	
+	//State FFs
+	always@(posedge clk)
+	begin: state_FFs
+		if(!resetn)
+			current_state <= S_WAIT_P;
+		else
+			current_state <= next_state;
+	end
+	
+endmodule
+
+//SENSOR ASSIGNMENT
+
+module Sensor(GPIO_1, trigger, kill);
+	input [35:0] GPIO_1;
+	input trigger;
+	output [6:0] kill;
+	
+	wire [5:0] sensor;
+	//0:top-left, 1:top-middle, 2:top-right, 3:bottom-left, 4:bottom-middle, 5:bottom-right
+	assign sensor[5:0] = {GPIO_1[35], GPIO_1[31], GPIO_1[27], GPIO_1[25], GPIO_1[21], GPIO_1[17]};
+	
+	assign kill[0] = trigger & (sensor == 6'b010000 | sensor == 6'b010010); //Boss-center
+	assign kill[1] = trigger & (sensor == 6'b000001); //top-left
+	assign kill[2] = trigger & (sensor == 6'b000100); //top-right
+	assign kill[3] = trigger & (sensor == 6'b001001); //middle-left
+	assign kill[4] = trigger & (sensor == 6'b100100); //middle-right
+	assign kill[5] = trigger & (sensor == 6'b001000); //bottom-left
+	assign kill[6] = trigger & (sensor == 6'b100000); //bottem-right
+	
+endmodule
+/*
+module Sensor(xCross, yCross, trigger, kill);
+	input [8:0] xCross;
+	input [7:0] yCross;
+	input trigger;
+	output [6:0] kill;
+	
+	wire [8:0] x_135 = 9'd0, x_246 = 9'd260;
+	wire [7:0] y_12 = 8'd0, y_34 = 8'd80, y_56 = 8'd160;
+	reg [6:0] sensor;//0: Boss, 1: Target1, 2: Target2, 3: Target3, 3: Target3, 4: Target4, 5: Target5, 6: Target6;
+	always @(*) begin
+		if((xCross >= 9'd100 && yCross >= 8'd80) && (xCross <= 9'd219 && yCross <= 8'd239)) sensor = 6'b0000001;
+		if((xCross >= x_135 && yCross >= y_12) && (xCross <= x_135 + 9'd59 && yCross <= y_12 + 8'd79)) sensor = 6'b0000010;
+		if((xCross >= x_246 && yCross >= y_12) && (xCross <= x_246 + 9'd59 && yCross <= y_12 + 8'd79)) sensor = 6'b0000100;
+		if((xCross >= x_135 && yCross >= y_34) && (xCross <= x_135 + 9'd59 && yCross <= y_34 + 8'd79)) sensor = 6'b0001000;
+		if((xCross >= x_246 && yCross >= y_34) && (xCross <= x_246 + 9'd59 && yCross <= y_34 + 8'd79)) sensor = 6'b0010000;
+		if((xCross >= x_135 && yCross >= y_56) && (xCross <= x_135 + 9'd59 && yCross <= y_56 + 8'd79)) sensor = 6'b0100000;
+		if((xCross >= x_246 && yCross >= y_56) && (xCross <= x_246 + 9'd59 && yCross <= y_56 + 8'd79)) sensor = 6'b1000000;
+	end
+	assign kill[0] = trigger & sensor[0]; //Boss
+	assign kill[1] = trigger & sensor[1]; //top-left
+	assign kill[2] = trigger & sensor[2]; //top-right
+	assign kill[3] = trigger & sensor[3]; //middle-left
+	assign kill[4] = trigger & sensor[4]; //middle-right
+	assign kill[5] = trigger & sensor[5]; //bottom-left
+	assign kill[6] = trigger & sensor[6]; //bottom-right
+	
+endmodule
+*/
+//COUNTDOWN TIMER
+module countdown(clk, titleoff, countdown, EndCond2, HEX0, HEX1);
+	input clk, titleoff;
+	output [6:0] HEX0, HEX1;
+	output reg EndCond2;
+	output reg [7:0] countdown;
+	
+	reg [25:0] counter;
+	always @(posedge clk) begin
+		if (!titleoff) counter <= 26'd0;
+		else if (counter == 26'd50000000) counter <= 26'd0;
+		else counter <= counter + 1'b1;
+	end
+	
+	always @(posedge clk) begin
+		if (!titleoff) countdown <= 8'd30;
+		else if (counter == 26'd50000000) countdown <= countdown - 1'b1;
+		else if (countdown == 8'd0) EndCond2 = 1'b1;
+		else EndCond2 = 1'b0;
+	end
+	
+	wire [3:0] Dec10, Dec1;
+	assign Dec10 = countdown / 4'd10;
+	assign Dec1 = countdown % 4'd10;
+	
+	hex_decoder H0(Dec1, HEX0);
+	hex_decoder H1(Dec10, HEX1);
+	
+endmodule
+
